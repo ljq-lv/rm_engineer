@@ -49,7 +49,10 @@ Middleware::Middleware(ros::NodeHandle& nh)
   , card_pub_(nh.advertise<std_msgs::Float64>("/controllers/card_controller/command", 10))
   , gimbal_pub_(nh.advertise<rm_msgs::GimbalCmd>("/controllers/gimbal_controller/command", 10))
   , gpio_pub_(nh.advertise<rm_msgs::GpioData>("/controllers/gpio_controller/command", 10))
+  , reversal_pub_(nh.advertise<rm_msgs::MultiDofCmd>("/controllers/multi_dof_controller/command", 10))
   , planning_result_pub_(nh.advertise<std_msgs::Int32>("/planning_result", 10))
+  , target_pub_(nh.subscribe<geometry_msgs::TwistStamped>("/target", 10, &Middleware::positionCallBack, this))
+  , trans_pub_(nh.subscribe<geometry_msgs::TwistStamped>("/trans", 10, &Middleware::transCallBack, this))
   , tf_listener_(tf_)
   , is_middleware_control_(false)
 {
@@ -65,7 +68,7 @@ Middleware::Middleware(ros::NodeHandle& nh)
     {
       step_queues_.insert(
           std::make_pair(it->first, StepQueue(it->second, scenes_list, tf_, arm_group_, chassis_interface_, hand_pub_,
-                                              card_pub_, gimbal_pub_, gpio_pub_, planning_result_pub_)));
+                                              card_pub_, gimbal_pub_, gpio_pub_, reversal_pub_, planning_result_pub_)));
     }
   }
   else
