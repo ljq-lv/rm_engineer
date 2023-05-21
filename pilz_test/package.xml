@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>pilz_test</name>
+  <version>0.0.0</version>
+  <description>The pilz_test package</description>
+  <maintainer email="lsy@todo.todo">lsy</maintainer>
+  <license>TODO</license>
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roslint</build_depend>
+  <depend>roscpp</depend>
+
+  <depend>std_msgs</depend>
+  <depend>moveit_core</depend>
+  <depend>moveit_ros_planning_interface</depend>
+
+</package>

@@ -1,0 +1,4 @@
+<launch>
+    <node name="pilz_test" pkg="pilz_test" type="pilz_test" respawn="false"
+          clear_params="true"/>
+</launch>
