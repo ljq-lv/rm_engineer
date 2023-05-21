@@ -163,14 +163,13 @@ public:
   bool move() override
   {
     MoveitMotionBase::move();
-    geometry_msgs::PoseStamped final_target;
     if (!target_.header.frame_id.empty())
     {
       try
       {
-        tf2::doTransform(target_.pose, final_target.pose,
+        tf2::doTransform(target_.pose, final_target_.pose,
                          tf_.lookupTransform(interface_.getPlanningFrame(), target_.header.frame_id, ros::Time(0)));
-        final_target.header.frame_id = interface_.getPlanningFrame();
+        final_target_.header.frame_id = interface_.getPlanningFrame();
       }
       catch (tf2::TransformException& ex)
       {
@@ -190,13 +189,13 @@ public:
     else
     {
       if (has_pos_ && has_ori_)
-        interface_.setPoseTarget(final_target);
+        interface_.setPoseTarget(final_target_);
       else if (has_pos_ && !has_ori_)
-        interface_.setPositionTarget(final_target.pose.position.x, final_target.pose.position.y,
-                                     final_target.pose.position.z);
+        interface_.setPositionTarget(final_target_.pose.position.x, final_target_.pose.position.y,
+                                     final_target_.pose.position.z);
       else if (!has_pos_ && has_ori_)
-        interface_.setOrientationTarget(final_target.pose.orientation.x, final_target.pose.orientation.y,
-                                        final_target.pose.orientation.z, final_target.pose.orientation.w);
+        interface_.setOrientationTarget(final_target_.pose.orientation.x, final_target_.pose.orientation.y,
+                                        final_target_.pose.orientation.z, final_target_.pose.orientation.w);
       moveit::planning_interface::MoveGroupInterface::Plan plan;
       msg_.data = interface_.plan(plan).val;
       return interface_.asyncExecute(plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS;
@@ -209,11 +208,11 @@ private:
     geometry_msgs::Pose pose = interface_.getCurrentPose().pose;
     double roll_current, pitch_current, yaw_current, roll_goal, pitch_goal, yaw_goal;
     quatToRPY(pose.orientation, roll_current, pitch_current, yaw_current);
-    quatToRPY(target_.pose.orientation, roll_goal, pitch_goal, yaw_goal);
+    quatToRPY(final_target_.pose.orientation, roll_goal, pitch_goal, yaw_goal);
     // TODO: Add orientation error check
-    return (std::pow(pose.position.x - target_.pose.position.x, 2) +
-                    std::pow(pose.position.y - target_.pose.position.y, 2) +
-                    std::pow(pose.position.z - target_.pose.position.z, 2) <
+    return (std::pow(pose.position.x - final_target_.pose.position.x, 2) +
+                    std::pow(pose.position.y - final_target_.pose.position.y, 2) +
+                    std::pow(pose.position.z - final_target_.pose.position.z, 2) <
                 tolerance_position_ &&
             std::abs(angles::shortest_angular_distance(yaw_current, yaw_goal)) +
                     std::abs(angles::shortest_angular_distance(pitch_current, pitch_goal)) +
@@ -222,7 +221,7 @@ private:
   }
   tf2_ros::Buffer& tf_;
   bool has_pos_, has_ori_, is_cartesian_;
-  geometry_msgs::PoseStamped target_;
+  geometry_msgs::PoseStamped target_, final_target_;
   double tolerance_position_, tolerance_orientation_;
 };
 
@@ -233,6 +232,8 @@ public:
                 tf2_ros::Buffer& tf)
     : EndEffectorMotion(motion, interface, tf), tf_(tf)
   {
+    tolerance_position_ = xmlRpcGetDouble(motion, "tolerance_position", 0.01);
+    tolerance_orientation_ = xmlRpcGetDouble(motion, "tolerance_orientation", 0.1);
     if (motion.hasMember("frame"))
       target_.header.frame_id = std::string(motion["frame"]);
     if (motion.hasMember("position"))
@@ -287,14 +288,13 @@ public:
     int move_times = (int)points_.getPoints().size();
     for (int i = 0; i < move_times && i < max_planning_times_; ++i)
     {
-      geometry_msgs::PoseStamped final_target;
       if (!target_.header.frame_id.empty())
       {
         try
         {
-          tf2::doTransform(target_.pose, final_target.pose,
+          tf2::doTransform(target_.pose, final_target_.pose,
                            tf_.lookupTransform(interface_.getPlanningFrame(), target_.header.frame_id, ros::Time(0)));
-          final_target.header.frame_id = interface_.getPlanningFrame();
+          final_target_.header.frame_id = interface_.getPlanningFrame();
           exchange2base_ = tf_.lookupTransform("base_link", target_.header.frame_id, ros::Time(0));
           double roll, pitch, yaw;
           quatToRPY(exchange2base_.transform.rotation, roll, pitch, yaw);
@@ -309,7 +309,7 @@ public:
       target_.pose.position.x = points_.getPoints()[i].x;
       target_.pose.position.y = points_.getPoints()[i].y;
       target_.pose.position.z = points_.getPoints()[i].z;
-      interface_.setPoseTarget(final_target);
+      interface_.setPoseTarget(final_target_);
       moveit::planning_interface::MoveGroupInterface::Plan plan;
       msg_.data = interface_.plan(plan).val;
       if (msg_.data == 1)
@@ -321,14 +321,15 @@ public:
 private:
   bool isReachGoal() override
   {
+    ROS_INFO("ENTER FINISH");
     geometry_msgs::Pose pose = interface_.getCurrentPose().pose;
     double roll_current, pitch_current, yaw_current, roll_goal, pitch_goal, yaw_goal;
     quatToRPY(pose.orientation, roll_current, pitch_current, yaw_current);
-    quatToRPY(target_.pose.orientation, roll_goal, pitch_goal, yaw_goal);
+    quatToRPY(final_target_.pose.orientation, roll_goal, pitch_goal, yaw_goal);
     // TODO: Add orientation error check
-    return (std::pow(pose.position.x - target_.pose.position.x, 2) +
-                    std::pow(pose.position.y - target_.pose.position.y, 2) +
-                    std::pow(pose.position.z - target_.pose.position.z, 2) <
+    return (std::pow(pose.position.x - final_target_.pose.position.x, 2) +
+                    std::pow(pose.position.y - final_target_.pose.position.y, 2) +
+                    std::pow(pose.position.z - final_target_.pose.position.z, 2) <
                 tolerance_position_ &&
             std::abs(angles::shortest_angular_distance(yaw_current, yaw_goal)) +
                     std::abs(angles::shortest_angular_distance(pitch_current, pitch_goal)) +
@@ -336,7 +337,7 @@ private:
                 tolerance_orientation_);
   }
   tf2_ros::Buffer& tf_;
-  geometry_msgs::PoseStamped target_;
+  geometry_msgs::PoseStamped target_, final_target_;
   geometry_msgs::TransformStamped exchange2base_;
   int max_planning_times_{};
   bool is_moved_{ false };

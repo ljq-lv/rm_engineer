@@ -17,9 +17,9 @@ common:
       accel: 0.3
       timeout: 2.
     quickly: &QUICKLY
-      speed: 0.8
-      accel: 0.8
-      timeout: 7.
+      speed: 0.9
+      accel: 0.9
+      timeout: 5.
 
   tolerance:
     small_tolerance: &SMALL_TOLERANCE
@@ -34,6 +34,8 @@ common:
   joint1:
     down_position: &JOINT1_DOWN_POSITION
                      -0.029600
+    home_zero_stone_position: &JOINT1_HOME_ZERO_STONE_POSITION
+                                0.005
     zero_stone_position: &JOINT1_ZERO_STONE_POSITION
                            0.08
     one_stone_position: &JOINT1_ONE_STONE_POSITION
@@ -63,7 +65,7 @@ common:
     go_get_ground_stone: &JOINT1_GO_GET_GROUND_STONE
                            0.11
     parallel_get_island_stone: &JOINT1_PARALLEL_GET_ISLAND_STONE_POSITION
-                                 0.10
+                                 0.09
     parallel_up_island_stone: &JOINT1_PARALLEL_UP_ISLAND_STONE_POSITION
                                 0.245
 
@@ -134,14 +136,14 @@ common:
     left_more_position: &JOINT5_LEFT_MORE_POSITION
                           1.527
     mid_position: &JOINT5_MID_POSITION
-                    0.027
+                    0.0001
     reversal_position: &JOINT5_REVERSAL_POSITION
                          0.011
     drag_car_position: &JOINT5_DRAG_CAR_POSITION
                          0.4977
   joint6:
     up_position: &JOINT6_UP_POSITION
-                   0.0127
+                   0.0001
     down_position: &JOINT6_DOWN_POSITION
                      3.1
     little_back_position: &JOINT6_LITTLE_BACK_POSITION
@@ -149,7 +151,7 @@ common:
     back_position: &JOINT6_BACK_POSITION
                      1.548990
     hold_stone: &JOINT6_HOLD_STONE_POSITION
-                  -0.2567
+                  -0.001
     reversal: &JOINT6_REVERSAL_POSITION
                 1.0
     drag_car_position: &JOINT6_DRAG_CAR_POSITION
@@ -166,8 +168,8 @@ common:
       target: 1.67
       delay: 0.6
     up_position_no_delay: &JOINT7_UP_NO_DELAY_POSITION
-      target: -0.1
-      delay: 0.
+      target: 0.008
+      delay: 0.05
     mid_position_no_delay: &JOINT7_MID_NO_DELAY_POSITION
       target: 0.7
       delay: 0.05
@@ -196,13 +198,13 @@ common:
         change: "+1"
   arm:
     home_zero_stone: &HOME_ZERO_STONE
-      joints: [ *JOINT1_ZERO_STONE_POSITION, *JOINT2_RECENTLY_POSITION, *JOINT3_MID_POSITION, *JOINT4_UP_POSITION, *JOINT5_LEFT_POSITION, *JOINT6_HOLD_STONE_POSITION ]
+      joints: [ *JOINT1_HOME_ZERO_STONE_POSITION, *JOINT2_RECENTLY_POSITION, *JOINT3_MID_POSITION, *JOINT4_UP_POSITION, *JOINT5_LEFT_POSITION, *JOINT6_HOLD_STONE_POSITION ]
       common:
         <<: *NORMALLY
       tolerance:
         <<: *NORMAL_TOLERANCE
     home_zero_stone_and_no_stone_in_hand: &HOME_ZERO_STONE_WITH_NO_STONE_IN_HAND
-      joints: [ *JOINT1_ZERO_STONE_POSITION, *JOINT2_RECENTLY_POSITION, *JOINT3_MID_POSITION, *JOINT4_UP_POSITION, *JOINT5_LEFT_POSITION, *JOINT6_LITTLE_BACK_POSITION ]
+      joints: [ *JOINT1_HOME_ZERO_STONE_POSITION, *JOINT2_RECENTLY_POSITION, *JOINT3_MID_POSITION, *JOINT4_UP_POSITION, *JOINT5_LEFT_POSITION, *JOINT6_LITTLE_BACK_POSITION ]
       common:
         <<: *NORMALLY
       tolerance:
@@ -241,7 +243,7 @@ common:
       position: [ -2 ,-0.25, 0. ]
     side_gimbal: &SIDE_POS
       frame: gimbal_base
-      position: [ 0.03 ,3, -0.02 ]
+      position: [ 0.03 ,3, -0.05 ]
     island_gimbal: &ISLAND_POS
       frame: gimbal_base
       position: [ 2 ,0.03, 0. ]
@@ -438,13 +440,6 @@ steps_list:
     - step: "joint7 up"
       joint7:
         <<: *JOINT7_UP_NO_DELAY_POSITION
-    - step: "avoid collision"
-      arm:
-        joints: [ *JOINT1_ZERO_STONE_POSITION, *JOINT2_RECENTLY_POSITION, *JOINT3_MID_POSITION, *JOINT4_UP_POSITION, *JOINT5_LEFT_POSITION, *JOINT6_HOLD_STONE_POSITION ]
-        common:
-          <<: *NORMALLY
-        tolerance:
-          <<: *NORMAL_TOLERANCE
     - step: "home with no stone"
       arm:
         <<: *HOME_ZERO_STONE
@@ -1754,6 +1749,13 @@ steps_list:
     - step: "island gimbal"
       gimbal:
         <<: *ISLAND_POS
+    - step: "forward"
+      chassis:
+        frame: base_link
+        position: [ -0.4, 0. ]
+        yaw: 0.0
+        chassis_tolerance_position_: 0.08
+        chassis_tolerance_angular_: 0.3
     - step: "joint7"
       joint7:
         <<: *JOINT7_DOWN_NO_DELAY_POSITION
@@ -1779,6 +1781,9 @@ steps_list:
           <<: *NORMALLY
         tolerance:
           <<: *NORMAL_TOLERANCE
+    - step: "joint7"
+      joint7:
+        <<: *JOINT7_UP_NO_DELAY_POSITION
     - step: "arm back stone"
       arm:
         joints: [ *JOINT1_PARALLEL_UP_ISLAND_STONE_POSITION, *JOINT2_BACK_POSITION, *JOINT3_MID_POSITION, *JOINT4_UP_POSITION, *JOINT5_MID_POSITION, *JOINT6_UP_POSITION ]
@@ -1786,9 +1791,6 @@ steps_list:
           <<: *QUICKLY
         tolerance:
           <<: *NORMAL_TOLERANCE
-    - step: "joint7"
-      joint7:
-        <<: *JOINT7_UP_POSITION
     - step: "move joint1 and 3"
       arm:
         joints: [ *STONE_STORAGE_HIGH_POSITION, *JOINT2_STORE_STONE_POSITION, *JOINT3_PARALLEL_STORE_STONE_POSITION, *JOINT4_UP_POSITION, *JOINT5_LEFT_POSITION, *JOINT6_UP_POSITION ]
@@ -1854,6 +1856,9 @@ steps_list:
     - step: "REVERSAL Z IN "
       reversal:
         <<: *VELOCITY_Z_IN
+    - step: "joint7"
+      joint7:
+        <<: *JOINT7_UP_NO_DELAY_POSITION
     - step: "arm back stone"
       arm:
         joints: [ *JOINT1_PARALLEL_UP_ISLAND_STONE_POSITION, *JOINT2_BACK_POSITION, *JOINT3_RT_TAKE_POSITION, *JOINT4_UP_POSITION, *JOINT5_MID_POSITION, *JOINT6_UP_POSITION ]
@@ -1861,9 +1866,6 @@ steps_list:
           <<: *QUICKLY
         tolerance:
           <<: *NORMAL_TOLERANCE
-    - step: "joint7"
-      joint7:
-        <<: *JOINT7_UP_POSITION
     - step: "move joint1 and 3"
       arm:
         joints: [ *STONE_STORAGE_HIGH_POSITION, *JOINT2_STORE_STONE_POSITION, *JOINT3_PARALLEL_STORE_STONE_POSITION, *JOINT4_UP_POSITION, *JOINT5_LEFT_POSITION, *JOINT6_UP_POSITION ]
@@ -1887,6 +1889,7 @@ steps_list:
         common:
           <<: *QUICKLY
         tolerance:
+
           <<: *BIGGER_TOLERANCE
     - step: "change stone"
       stone_num:
@@ -1894,6 +1897,13 @@ steps_list:
     - step: "REVERSAL Z IN "
       reversal:
         <<: *VELOCITY_Z_IN_SLOWLY
+    - step: "avoid collision"
+      arm:
+        joints: [ *JOINT1_ONE_STONE_POSITION, *JOINT2_AVOID_LINE_COLLISION_POSITION, *JOINT3_MID_POSITION, *JOINT4_UP_POSITION, *JOINT5_LEFT_POSITION, *JOINT6_HOLD_STONE_POSITION ]
+        common:
+          <<: *NORMALLY
+        tolerance:
+          <<: *BIGGER_TOLERANCE
     - step: "move home"
       arm:
         joints: [ *JOINT1_ONE_STONE_POSITION, *JOINT2_BACK_POSITION, *JOINT3_MID_POSITION, *JOINT4_UP_POSITION, *JOINT5_LEFT_POSITION, *JOINT6_UP_POSITION ]
@@ -2333,8 +2343,7 @@ steps_list:
         max_planning_times: 40
         common:
           <<: *SLOWLY_LOW_TIMEOUT
-        tolerance:
-          <<: *BIGGER_TOLERANCE
+
   EXCHANGE_AUTO_TWO:
     - step: "auto exchange"
       arm:
@@ -2402,13 +2411,11 @@ steps_list:
   #        common:
   #          <<: *SLOWLY
 
-  EXCHANGE_GENERATE:
-    - step: "move to wait"
+  TEST:
+    - step: "joint7 up"
       arm:
-        frame: exchanger
-        position: [ 0., 0., -0.30 ]
-        rpy: [ 0., 0.,1.57 ]
-        tolerance_position: 0.001
-        tolerance_orientation: 0.005
+        joints: [ "KEEP", "KEEP", "KEEP", *JOINT4_UP_POSITION, "KEEP", "KEEP" ]
         common:
-          <<: *SLOWLY
+          <<: *NORMALLY
+        tolerance:
+          <<: *BIGGER_TOLERANCE
