@@ -22,7 +22,10 @@ public:
     double x, y, z, distance;
     static bool comparePointsDistance(const Point& a, const Point& b)
     {
-      return a.distance < b.distance;
+      if (a.distance == b.distance)
+        return abs(a.z) < abs(b.z);
+      else
+        return a.distance < b.distance;
     }
   };
   enum Geometry
@@ -74,7 +77,7 @@ public:
       cloud.points[i].x = points_final_[i].x;
       cloud.points[i].y = points_final_[i].y;
       cloud.points[i].z = points_final_[i].z;
-      //cloud.channels[0].values[i] = i;
+      // cloud.channels[0].values[i] = i;
     }
     sensor_msgs::convertPointCloudToPointCloud2(cloud, cloud2);
     return cloud2;
@@ -85,7 +88,7 @@ public:
     rectify.x = abs(points_final_[0].x) * sin(theta) * k_x;
     rectify.y = abs(points_final_[0].x) * sin(beta) * k_beta;
     rectify.z = abs(points_final_[0].x) * sin(theta) * k_theta;
-      ROS_INFO_STREAM(rectify);
+    ROS_INFO_STREAM(rectify);
     for (int i = 0; i < (int)points_final_.size(); ++i)
     {
       points_final_[i].x += rectify.x;
